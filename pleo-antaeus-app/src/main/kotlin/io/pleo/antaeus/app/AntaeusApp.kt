@@ -11,11 +11,11 @@ import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.services.SchedulingService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
+import io.pleo.antaeus.schedule.services.SchedulingService
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -70,7 +70,7 @@ fun main() {
 
     // Create REST web service
     AntaeusRest(
-        // schedulingService = schedulingService,
+        schedulingService = schedulingService,
         invoiceService = invoiceService,
         customerService = customerService
     ).run()

@@ -27,27 +27,16 @@ Requirements:
 
 ### Running
 
-There are 2 options for running Anteus. You either need libsqlite3 or docker. Docker is easier but requires some docker knowledge. We do recommend docker though.
+Docker Compose is required to run.
 
 
 *Running through docker*
 
-Install docker for your platform
+Install docker compose for your platform
 
+```bash
+> docker-compose up -d --scale antaeus=3
 ```
-make docker-run
-```
-
-*Running Natively*
-
-Native java with sqlite (requires libsqlite3):
-
-If you use homebrew on MacOS `brew install sqlite`.
-
-```
-./gradlew run
-```
-
 
 ### App Structure
 The code given is structured as follows. Feel free however to modify the structure to fit your needs.
@@ -67,8 +56,14 @@ The code given is structured as follows. Feel free however to modify the structu
 |
 ├── pleo-antaeus-rest
 |        Entry point for REST API. This is where the routes are defined.
+|
+├── pleo-antaeus-schedule
+|        Module containing the APIs for scheduling and running payment of invoices.
 └──
 ```
+
+## The Solution
+
 
 ### Main Libraries and dependencies
 * [Exposed](https://github.com/JetBrains/Exposed) - DSL for type-safe SQL
@@ -77,5 +72,6 @@ The code given is structured as follows. Feel free however to modify the structu
 * [JUnit 5](https://junit.org/junit5/) - Testing framework
 * [Mockk](https://mockk.io/) - Mocking library
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
+* [Quartz](http://www.quartz-scheduler.org/) - Scheduling library
 
 Happy hacking 😁!

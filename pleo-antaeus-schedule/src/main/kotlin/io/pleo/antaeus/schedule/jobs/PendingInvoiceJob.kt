@@ -1,7 +1,7 @@
 package io.pleo.antaeus.core.jobs
 
 import io.pleo.antaeus.core.services.BillingService
-import io.pleo.antaeus.core.services.SchedulingService
+import io.pleo.antaeus.schedule.services.SchedulingService
 import org.quartz.Job
 import org.quartz.JobBuilder.newJob
 import org.quartz.JobExecutionContext
@@ -21,11 +21,15 @@ internal class PendingInvoiceJob : Job {
         // not to keep this thread running too long
         // TODO flush buffer after every 'N' records fetched
         billingService.fetchInvoices().forEach{
+            // For each invoice schedule a job to process. The jobs are passed to a thread pool managed by quartz
+            // Another option is to use coroutines
             jobExecutionContext.scheduler.scheduleJob(
                     newJob(BillingJob::class.java)
                             .usingJobData("invoiceId", it.id)
-                            .withIdentity("dummy-${it.id}").build(),
-                    newTrigger().withIdentity("dummy-${it.id}").startNow().build()
+                            .withIdentity("bill-${it.id}", "antaeus")
+                            .build(),
+                    newTrigger().withIdentity("bill-${it.id}", "antaeus")
+                            .startNow().build()
             )
         }
         log.debug("Invoices fetched are being processed")

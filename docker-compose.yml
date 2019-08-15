@@ -1,0 +1,28 @@
+version: '3.7'
+
+services: 
+  antaeus:
+    image: pleo/antaeus
+    build: .
+    ports: 
+    - '7000:7000'
+    environment: 
+    - MAX_RETRIES=3
+    volumes: 
+    - pleo-antaeus-build-cache:/root/.gradle
+    depends_on: 
+    - postgres
+  postgres:
+    image: postgres:11
+    ports: 
+    - '5432:5432'
+    environment: 
+    - POSTGRES_USER=antaeus
+    # The password should be properly protected in a production environment
+    - POSTGRES_PASSWORD=antaeuspwd
+    - POSTGRES_DB=antaeus
+    volumes: 
+    - ./quartz.sql:/docker-entrypoint-initdb.d/quartz.sql
+
+volumes: 
+  pleo-antaeus-build-cache:
