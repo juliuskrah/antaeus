@@ -1,11 +1,18 @@
 version: '3.7'
 
 services: 
+  nginx: # Load balances the three instances of antaeus
+    image: nginx:1.16
+    ports: 
+    - '80:80'
+    volumes:
+    - ./proxy_params:/etc/nginx/proxy_params
+    - ./default.conf:/etc/nginx/conf.d/default.conf
+    depends_on: 
+    - antaeus
   antaeus:
     image: pleo/antaeus
     build: .
-    ports: 
-    - '7000:7000'
     environment: 
     - MAX_RETRIES=3
     - GRADLE_OPTS="-Dorg.quartz.properties=antaeus.properties"

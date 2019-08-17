@@ -40,6 +40,8 @@ Install docker compose for your platform
 > docker-compose up -d --scale antaeus=3
 ```
 
+The above starts three instances of the antaeus app
+
 ### App Structure
 The code given is structured as follows. Feel free however to modify the structure to fit your needs.
 ```
@@ -57,15 +59,108 @@ The code given is structured as follows. Feel free however to modify the structu
 |       Definition of the "rest api" models used throughout the application.
 |
 ├── pleo-antaeus-rest
-|        Entry point for REST API. This is where the routes are defined.
+|       Entry point for REST API. This is where the routes are defined.
 |
 ├── pleo-antaeus-schedule
-|        Module containing the APIs for scheduling and running payment of invoices.
+|       Module containing the APIs for scheduling and running payment of invoices.
 └──
 ```
 
 ## The Solution
+The problem domain here is with scheduling payment of invoices, so the focus will be on scheduling.
+To achieve this, I will use the Quartz Scheduling library for the JVM.
 
+A new module has been added `pleo-antaeus-schedule` to abstract scheduling related activities. This module
+contains two jobs `PendingInvoiceJob` and `BillingJob`.
+
+`PendingInvoiceJob` is scheduled to run on the 1st of each month. Once run, it fetches all pending invoices
+and schedules each to be run immediately. A thread pool of 5 is initialized to cater for the numerous jobs.
+This is configurable in a `properties` file (quartz.properties).
+
+The `PaymentProvider#charge()` throws three possible exceptions
+- CustomerNotFoundException: A business rule can be used to determine what to do when customer is not found
+- CurrencyMismatchException: A business rule can be used to determine what to do when there's a currency mismatch
+- NetworkException: In case of a network exception, there's a retry loop. The number of retries is 
+configurable with an environment variable (`MAX_RETRIES`)
+
+### Runtime Configuration
+The problem domain is with scheduling. We need a way to add new schedules e.g. try to charge invoices three times a month. We can also update the schedule.
+
+Three endpoints are added in the `pleo-antaeus-rest` module:
+
+- Fetch all jobs
+
+```json
+GET: http:$HOST:$PORT/rest/v1/jobs
+
+[
+    {
+        "group": "antaeus",
+        "name": "invoices",
+        "triggers": [
+            {
+                "group": "antaeus",
+                "name": "invoices",
+                "cron": ""
+            }
+        ]
+    }
+]
+```
+
+- Create a job
+
+```json
+POST: http:$HOST:$PORT/rest/v1/jobs
+
+ {
+    "group": "antaeus",
+    "name": "invoices",
+    "triggers": [
+        {
+            "group": "antaeus",
+            "name": "invoices1",
+            "cron": "0 0 12 1 1/1 ? *"
+        }
+    ]
+}
+```
+
+- Update a job
+
+```json
+PUT: http:$HOST:$PORT/rest/v1/jobs
+
+ {
+    "group": "antaeus",
+    "name": "invoices",
+    "triggers": [
+        {
+            "group": "antaeus",
+            "name": "invoices1",
+            "cron": "0 0 12 1 1/1 ? *"
+        }
+    ]
+}
+```
+
+### Testing
+Test cases have been written for all new service methods and REST endpoints. Continuous integration
+with travis has been added to ensure the tests also pass on another machine.
+
+### Scaling
+When the application is scaled horizontally, there is the possibility, scheduled tasks will run 
+concurrently on all instances causing duplicate charges.
+
+Quartz provides cluster support through its JDBC jobstore ensuring only one instance executes the 
+scheduled task. Postgres database has been added to provide a shared database for the scheduled
+quartz instances.
+
+### Limitations
+- [x] Security: The implementation here lacks any security. One solution is to protect it with OpenID Connect
+- [x] When loading potentially large datasets of invoices, this could lead to out of memory errors
+- [x] Retries: The retry happens immediately. A production ready system will have some sort of an 
+exponential backoff mechanism to allow the external system to recover
 
 ### Main Libraries and dependencies
 * [Exposed](https://github.com/JetBrains/Exposed) - DSL for type-safe SQL
