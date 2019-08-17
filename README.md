@@ -74,13 +74,14 @@ A new module has been added `pleo-antaeus-schedule` to abstract scheduling relat
 contains two jobs `PendingInvoiceJob` and `BillingJob`.
 
 `PendingInvoiceJob` is scheduled to run on the 1st of each month. Once run, it fetches all pending invoices
-and schedules each to be run immediately. A thread pool of 5 is initialized to cater for the numerous jobs.
+and schedules each invoice as `BillingJob` to run immediately. A thread pool of 5 is initialized to cater 
+for the numerous jobs.
 This is configurable in a `properties` file (quartz.properties).
 
-The `PaymentProvider#charge()` throws three possible exceptions
-- CustomerNotFoundException: A business rule can be used to determine what to do when customer is not found
-- CurrencyMismatchException: A business rule can be used to determine what to do when there's a currency mismatch
-- NetworkException: In case of a network exception, there's a retry loop. The number of retries is 
+The `PaymentProvider#charge(Invoice)` throws three possible exceptions
+- `CustomerNotFoundException`: A business rule can be used to determine what to do when customer is not found
+- `CurrencyMismatchException`: A business rule can be used to determine what to do when there's a currency mismatch
+- `NetworkException`: In case of a network exception, there's a retry loop. The number of retries is 
 configurable with an environment variable (`MAX_RETRIES`)
 
 ### Runtime Configuration
@@ -157,8 +158,8 @@ scheduled task. Postgres database has been added to provide a shared database fo
 quartz instances.
 
 ### Limitations
-- [x] Security: The implementation here lacks any security. One solution is to protect it with OpenID Connect
-- [x] When loading potentially large datasets of invoices, this could lead to out of memory errors
+- [x] Security: The implementation here lacks security. One solution is to protect it with OpenID Connect
+- [x] When loading potentially large datasets of invoices, this could lead to out of memory errors. One solution is to fetch in batches
 - [x] Retries: The retry happens immediately. A production ready system will have some sort of an 
 exponential backoff mechanism to allow the external system to recover
 
