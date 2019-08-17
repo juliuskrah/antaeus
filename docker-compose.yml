@@ -8,6 +8,7 @@ services:
     - '7000:7000'
     environment: 
     - MAX_RETRIES=3
+    - GRADLE_OPTS="-Dorg.quartz.properties=antaeus.properties"
     volumes: 
     - pleo-antaeus-build-cache:/root/.gradle
     depends_on: 

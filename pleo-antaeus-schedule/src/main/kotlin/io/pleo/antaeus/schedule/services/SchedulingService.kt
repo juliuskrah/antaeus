@@ -6,27 +6,23 @@ import io.pleo.antaeus.core.jobs.PendingInvoiceJob
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.models.Job
 import io.pleo.antaeus.models.Trigger
-import org.quartz.CronScheduleBuilder.*
-import org.quartz.SimpleScheduleBuilder.repeatMinutelyForever
-import org.quartz.Scheduler
+import mu.KotlinLogging
+import org.quartz.CronScheduleBuilder.cronSchedule
 import org.quartz.JobBuilder.newJob
 import org.quartz.JobKey
+import org.quartz.Scheduler
 import org.quartz.SchedulerException
 import org.quartz.TriggerBuilder.newTrigger
 import org.quartz.impl.StdSchedulerFactory
 import org.quartz.impl.matchers.GroupMatcher.anyJobGroup
-import org.slf4j.LoggerFactory
+
+private val logger = KotlinLogging.logger {}
 
 class SchedulingService(
      billingService: BillingService
 ) {
     companion object {
         const val BILLING_SERVICE = "billingService"
-
-        @Suppress("JAVA_CLASS_ON_COMPANION")
-        @JvmStatic
-        private val log = LoggerFactory.getLogger(javaClass.enclosingClass)
-
     }
     private val scheduler: Scheduler = StdSchedulerFactory.getDefaultScheduler()
 
@@ -39,7 +35,7 @@ class SchedulingService(
     }
 
     fun close() {
-        log.info("Shutting down scheduler")
+        logger.info("Shutting down scheduler")
         if (!scheduler.isShutdown) scheduler.shutdown()
     }
 
@@ -94,7 +90,6 @@ class SchedulingService(
                 // In a real application, validate cron expression
                 // CronExpression.validateExpression(it.cron)
                 .withSchedule(cronSchedule(it.cron))
-                // .withSchedule(repeatMinutelyForever())
                 .build()
     }.toSet()
 

@@ -3,8 +3,10 @@ package io.pleo.antaeus.core.services
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus.*
+import mu.KotlinLogging
 import org.slf4j.LoggerFactory
 
+private val logger = KotlinLogging.logger {}
 /**
  * Billing Service contains methods to fetch and charge invoices
  */
@@ -12,7 +14,6 @@ class BillingService(
         private val paymentProvider: PaymentProvider,
         private val invoiceService: InvoiceService
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
 
     /**
      * Charge a customer's account the amount from the invoice. Rethrows exceptions from {@link PaymentProvider#charge}
@@ -34,7 +35,7 @@ class BillingService(
                 // send email to customer about failure
             }
         } else {
-            log.info("invoice ${invoice.id} is paid. Skipping")
+            logger.info("invoice ${invoice.id} is paid. Skipping")
         }
     }
 
